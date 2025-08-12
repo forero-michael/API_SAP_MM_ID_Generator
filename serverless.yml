@@ -1,0 +1,23 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: drpaulaximena
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: api-sap-mm-id-generator
+
+plugins:
+  - serverless-offline
+ 
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  # Uncomment to easily set up a custom domain. Read the docs for more details:
+  # https://www.serverless.com/framework/docs/providers/aws/guide/domains
+  # domain: api.example.com
+
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - httpApi:
+          path: /
+          method: get
