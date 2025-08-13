@@ -1,0 +1,14 @@
+[
+  {
+    "uuid": "0354b3cb-65b4-4e50-b7d7-13a7869c187c",
+    "priority": "primary",
+    "Id_master_unit": "22000000",
+    "date_modified": "2025-08-11T12:00:00Z"
+  },
+  {
+    "uuid": "9a841fb6-024c-45dc-978e-4a0f2dbd3050",
+    "priority": "deprecated",
+    "Id_master_unit": "T00000000",
+    "date_modified": "2025-08-11T13:00:00Z"
+  }
+]

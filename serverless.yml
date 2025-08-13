@@ -1,23 +1,96 @@
-# "org" ensures this Service is used with the correct Serverless Framework Access Key.
-org: drpaulaximena
-# "service" is the name of this project. This will also be added to your AWS resource names.
 service: api-sap-mm-id-generator
 
 plugins:
   - serverless-offline
- 
+  - serverless-dynamodb
 
 provider:
   name: aws
   runtime: nodejs22.x
-  # Uncomment to easily set up a custom domain. Read the docs for more details:
-  # https://www.serverless.com/framework/docs/providers/aws/guide/domains
-  # domain: api.example.com
 
 functions:
-  hello:
-    handler: handler.hello
+  get-new-Id:
+    handler: getNewID/handler.getNewID
     events:
       - httpApi:
-          path: /
+          path: getNewID
           method: get
+  create-new_id:
+    handler: createNewId/handler.createNewId
+    events:
+      - http:
+          path: createNewID
+          method: POST
+
+custom:
+  serverless-offline:
+    httpPort: 3000
+    lambdaPort: 3002
+
+  dynamodb:
+    stages:
+      - dev
+    start:
+      port: 8010
+      inMemory: false
+      dbPath: .offline-data
+      migrate: true
+      seed:
+        dev:
+          sources:
+            - table: ts_id_master_counter
+              sources: [./data/initial_data.json]
+
+resources:
+  Resources:
+    devTsIdMasterCounter:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ts_id_master_counter
+        AttributeDefinitions:
+          - AttributeName: uuid
+            AttributeType: S
+          - AttributeName: priority
+            AttributeType: S
+        KeySchema:
+          - AttributeName: uuid
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: PriorityIndex 
+            KeySchema:
+              - AttributeName: priority
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        Type: AWS::DynamoDB::Table
+    devTsIdGenerated:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ts_id_generated
+        AttributeDefinitions:
+          - AttributeName: uuid
+            AttributeType: S
+          - AttributeName: id_generated
+            AttributeType: S
+          - AttributeName: country
+            AttributeType: S
+          - AttributeName: date_created
+            AttributeType: S
+        KeySchema:
+          - AttributeName: uuid
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: idGeneratedIndex
+            KeySchema:
+              - AttributeName: id_generated
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: dateCreatedIndex
+            KeySchema:
+              - AttributeName: country
+                KeyType: HASH
+              - AttributeName: date_created
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
