@@ -22,7 +22,13 @@ functions:
       - http:
           path: createNewID
           method: POST
-#configuracion de puestro del serverless offline y base de datos dynamo
+  modified-counter-master:
+    handler: modifiedCounterMaster/handler.modifiedCounterMaster
+    events:
+      - http:
+          path: modifiedCounterMaster
+          method: PUT
+#configuracion de puerto del serverless offline y base de datos dynamo
 custom:
   serverless-offline:
     httpPort: 3000
@@ -36,6 +42,11 @@ custom:
       inMemory: false         # va a requerir un archivo de almacenamiento
       dbPath: .offline-data   # Path donde se guarda el archivo de almacenamiento
       migrate: true
+      seed:
+        dev:
+          sources:
+            - table: ts_id_master_counter
+              sources: [./data/initial_data.json]   # Alimentacion inicial de la tabla
 
 resources:
   Resources:
