@@ -15,46 +15,57 @@ if (process.env.IS_OFFLINE) {
 
 const modifiedCounterMaster = async (event, context) => {
   try {
-    const body = JSON.parse(event.body)
-    const { uuid } = body
+    const body = JSON.parse(event.body);
+    const { uuid } = body;
 
     if (!uuid) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ message: "uuid es requerido para actualizar el contador maestro" }),
-      }
+        body: JSON.stringify({
+          message: "uuid es requerido para actualizar el lote",
+        }),
+      };
     }
 
-    // Incrementar automáticamente el campo "id_master_unit" (contador maestro)
+    // Incrementar el campo "id_master_unit"
     const paramsUpdate = {
       TableName: "ts_id_master_counter",
       Key: { uuid },
-      UpdateExpression: "SET id_master_unit = if_not_exists(id_master_unit, :start) + :inc",
+      UpdateExpression:
+        "SET id_master_unit = if_not_exists(id_master_unit, :start) + :inc",
       ExpressionAttributeValues: {
         ":inc": 1,
-        ":start": 0
+        ":start": 0,
       },
-      ReturnValues: "ALL_NEW"
-    }
+      ReturnValues: "ALL_NEW",
+    };
 
-    const result = await dynamodb.update(paramsUpdate).promise()
+    const result = await dynamodb.update(paramsUpdate).promise();
+
+    const loteFormateado = `T${String(result.Attributes.id_master_unit).padStart(
+      8,
+      "0"
+    )}`;
 
     return {
       statusCode: 200,
       body: JSON.stringify({
-        message: "Contador maestro actualizado correctamente",
-        updatedItem: result.Attributes
+        lote: loteFormateado,
+        updatedItem: result.Attributes,
       }),
-    }
+    };
   } catch (error) {
-    console.error("Error al actualizar contador maestro:", error)
+    console.error("Error al actualizar lote:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: "Error interno al actualizar contador maestro", error: error.message }),
-    }
+      body: JSON.stringify({
+        message: "Error interno al actualizar lote",
+        error: error.message,
+      }),
+    };
   }
-}
+};
 
 module.exports = {
-  modifiedCounterMaster
-}
+  modifiedCounterMaster,
+};
