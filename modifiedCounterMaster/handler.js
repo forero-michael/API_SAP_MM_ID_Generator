@@ -21,15 +21,15 @@ const modifiedCounterMaster = async (event, context) => {
     if (!uuid) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ message: "uuid es requerido para actualizar el lote" }),
+        body: JSON.stringify({ message: "uuid es requerido para actualizar el contador maestro" }),
       }
     }
 
-    // Incrementar automáticamente el campo "lote"
+    // Incrementar automáticamente el campo "id_master_unit" (contador maestro)
     const paramsUpdate = {
       TableName: "ts_id_master_counter",
       Key: { uuid },
-      UpdateExpression: "SET lote = if_not_exists(lote, :start) + :inc",
+      UpdateExpression: "SET id_master_unit = if_not_exists(id_master_unit, :start) + :inc",
       ExpressionAttributeValues: {
         ":inc": 1,
         ":start": 0
@@ -42,15 +42,15 @@ const modifiedCounterMaster = async (event, context) => {
     return {
       statusCode: 200,
       body: JSON.stringify({
-        message: "Lote actualizado exitosamente (PUT)",
+        message: "Contador maestro actualizado correctamente",
         updatedItem: result.Attributes
       }),
     }
   } catch (error) {
-    console.error("Error al actualizar lote:", error)
+    console.error("Error al actualizar contador maestro:", error)
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: "Error interno al actualizar lote", error: error.message }),
+      body: JSON.stringify({ message: "Error interno al actualizar contador maestro", error: error.message }),
     }
   }
 }
