@@ -19,7 +19,7 @@ functions:
   create-new_id:
     handler: createNewId/handler.createNewId
     events:
-      - http:
+      - httpApi:
           path: createNewID
           method: POST
 #configuracion de puestro del serverless offline y base de datos dynamo
