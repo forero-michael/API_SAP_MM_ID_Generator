@@ -3,32 +3,65 @@ service: api-sap-mm-id-generator
 # Herramientas para trabajo con serverless, en local y en nube
 plugins:
   - serverless-offline
+  - serverless-offline-local-authorizers-plugin
   - serverless-dynamodb
 
 provider:
   name: aws
   runtime: nodejs18.x
   region: us-east-1
+  stage: ${opt:stage, 'dev'}
   role: arn:aws:iam::896994900671:role/RolServerless
   deploymentBucket:
     name: spradling-sls-artifacts-us-east-1
     blockPublicAccess: true
     serverSideEncryption: AES256
+  httpApi:
+    authorizers:
+      myJWTAuthorizer:
+        type: jwt
+        identitySource: $request.header.Authorization
+        # Reemplaza los valores de ejemplo con los de tu User Pool
+        issuerUrl: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_abcdef123
+        audience:
+          - api-sap-mm-id-testa-pqn-2349
+
+        local:
+          claims:
+            - sub=testaSolutions
+            - aud=api-sap-mm-id-testa-pqn-2349
 
 functions:
   get-new-Id:
     handler: getNewID/handler.getNewID
     events:
-      - httpApi: 'GET /getNewID'
+      - httpApi: 
+          path: '/getNewID'
+          method: 'GET'
+          authorizer:
+            name: myJWTAuthorizer
+            scopes:
+              - 'user:read'
   create-new_id:
     handler: createNewId/handler.createNewId
     events:
-      - httpApi: 'POST /createNewID'
+      - httpApi:
+          path: '/createNewID'
+          method: 'POST'
+          authorizer:
+            name: myJWTAuthorizer  
+            scopes:
+              - 'user:write'
   modified-counter-master:
     handler: modifiedCounterMaster/handler.modifiedCounterMaster
     events:
-      - httpApi: 'PUT /modifiedCounterMaster'
-  
+      - httpApi:
+          path: '/modifiedCounterMaster'
+          method: 'PUT'
+          authorizer:
+            name: myJWTAuthorizer
+            scopes:
+              - 'user:write'
 #configuracion de puestro del serverless offline y base de datos dynamo
 custom:
   serverless-offline:
