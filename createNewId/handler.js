@@ -14,6 +14,18 @@ if (process.env.IS_OFFLINE) {
 
 
 const createNewId = async (event, context) => {
+
+    const claims = event.requestContext.authorizer.jwt.claims;
+    const userGroups = claims['cognito:groups'] || [];
+    if (!userGroups.includes('adminGroup')) {
+        return {
+            statusCode: 403,
+            body: JSON.stringify({
+                message: 'Acceso denegado: No tienes los permisos requeridos.'
+            }),
+        };
+    }
+    
     const id = randomUUID()
     let userBody = JSON.parse(event.body)
     userBody.uuid = id

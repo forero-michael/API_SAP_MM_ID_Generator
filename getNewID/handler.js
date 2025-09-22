@@ -13,7 +13,7 @@ if (process.env.IS_OFFLINE) {
 }
 
 const getNewID = async (event, context) => {
-    // Consulta del ID actula que esta en la tabla ts_id_master_counter
+
     try {
         const statusCounter = "primary"
         var paramsQueryActualMasterID = {
@@ -25,7 +25,7 @@ const getNewID = async (event, context) => {
             }
         const jsonActualMasterId = await dynamodb.scan(paramsQueryActualMasterID).promise()
         const objectMasterId = jsonActualMasterId.Items[0]
-        const masterId = objectMasterId.id_master_unit
+        const masterId = objectMasterId.Id_master_unit
         const numberMasterID = parseInt(masterId.slice(1))
         // Contruccion del JSON para envio a Testa
         
@@ -68,7 +68,7 @@ const getNewID = async (event, context) => {
         const updateParams = {
             TableName: "ts_id_master_counter",
             Key: { uuid: uuidToUpdate },
-            UpdateExpression: 'set id_master_unit = :val',
+            UpdateExpression: 'set Id_master_unit = :val',
             ExpressionAttributeValues: { ':val': sendMasterIdLoteSAPFormattedWithT },
             ReturnValues: 'ALL_NEW',
             };

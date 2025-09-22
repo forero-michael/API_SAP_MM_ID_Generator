@@ -3,14 +3,14 @@ service: api-sap-mm-id-generator
 # Herramientas para trabajo con serverless, en local y en nube
 plugins:
   - serverless-offline
-  - serverless-offline-local-authorizers-plugin
+  # - serverless-offline-local-authorizers-plugin
   - serverless-dynamodb
 
 provider:
   name: aws
   runtime: nodejs18.x
   region: us-east-1
-  stage: ${opt:stage, 'dev'}
+  # stage: ${opt:stage, 'dev'}
   role: arn:aws:iam::896994900671:role/RolServerless
   deploymentBucket:
     name: spradling-sls-artifacts-us-east-1
@@ -22,16 +22,41 @@ provider:
         type: jwt
         identitySource: $request.header.Authorization
         # Reemplaza los valores de ejemplo con los de tu User Pool
-        issuerUrl: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_abcdef123
+        issuerUrl: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_H0jA2ny1g
         audience:
-          - api-sap-mm-id-testa-pqn-2349
+          - '2jvhi7csnr41idp51k0i0do8cj'
 
-        local:
-          claims:
-            - sub=testaSolutions
-            - aud=api-sap-mm-id-testa-pqn-2349
+        # local:
+        #   claims:
+        #     - sub=testaSolutions
+        #     - aud=api-sap-mm-id-testa-pqn-2349
 
 functions:
+  login:
+    handler: auth/handler.login
+    events:
+      - httpApi:
+          path: '/login'
+          method: 'POST'
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+        - "cognito-idp:InitiateAuth"
+        Resource:
+          - "arn:aws:cognito-idp:us-east-1:896994900671:userpool/us-east-1_H0jA2ny1g"
+  set-new-password:
+    handler: changePassword/handler.changePassword
+    events:
+      - httpApi:
+          path: '/set-new-password'
+          method: 'POST'
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - "cognito-idp:RespondToAuthChallenge"
+        Resource:
+          - "arn:aws:cognito-idp:us-east-1:896994900671:userpool/us-east-1_H0jA2ny1g"
+
   get-new-Id:
     handler: getNewID/handler.getNewID
     events:
@@ -40,8 +65,6 @@ functions:
           method: 'GET'
           authorizer:
             name: myJWTAuthorizer
-            scopes:
-              - 'user:read'
   create-new_id:
     handler: createNewId/handler.createNewId
     events:
@@ -50,8 +73,6 @@ functions:
           method: 'POST'
           authorizer:
             name: myJWTAuthorizer  
-            scopes:
-              - 'user:write'
   modified-counter-master:
     handler: modifiedCounterMaster/handler.modifiedCounterMaster
     events:
@@ -60,8 +81,6 @@ functions:
           method: 'PUT'
           authorizer:
             name: myJWTAuthorizer
-            scopes:
-              - 'user:write'
 #configuracion de puestro del serverless offline y base de datos dynamo
 custom:
   serverless-offline:
