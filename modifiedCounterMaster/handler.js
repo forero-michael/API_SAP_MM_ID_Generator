@@ -15,66 +15,55 @@ if (process.env.IS_OFFLINE) {
 
 const modifiedCounterMaster = async (event, context) => {
   try {
-    const body = JSON.parse(event.body)
-    const { uuid } = body
+    const body = JSON.parse(event.body);
+    const { uuid, id_master_unit } = body;
 
-    if (!uuid) {
+    if (!uuid || !id_master_unit) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ message: "uuid es requerido para actualizar el lote" }),
-      }
+        body: JSON.stringify({
+          message: "uuid e id_master_unit son requeridos",
+        }),
+      };
     }
 
-    // Valor actual del lote
-    const paramsGet = {
-      TableName: "ts_id_master_counter",
-      Key: { uuid }
-    }
-
-    const currentItem = await dynamodb.get(paramsGet).promise();
-
-    if (!currentItem.Item) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ message: "No se encontró el registro con ese uuid" }),
-      }
-    }
-
-    let currentLote = currentItem.Item.id_master_unit || "T00000000";
-
-    // Extraer número, incrementar y formatear
-    let currentNumber = parseInt(currentLote.replace("T", "")) || 0;
+    let currentNumber = parseInt(id_master_unit.replace(/[^\d]/g, "")) || 0;
+    let prefix = id_master_unit[0] || "T"; // Para mantener el prefijo dinámico
     let newNumber = currentNumber + 1;
-    let newLote = "T" + String(newNumber).padStart(8, "0");
+    let newLote = prefix + String(newNumber).padStart(id_master_unit.length - 1, "0");
 
-    // Actualizar registro
+  
     const paramsUpdate = {
       TableName: "ts_id_master_counter",
       Key: { uuid },
       UpdateExpression: "SET id_master_unit = :newLote",
       ExpressionAttributeValues: {
-        ":newLote": newLote
+        ":newLote": newLote,
       },
-      ReturnValues: "ALL_NEW"
-    }
+      ReturnValues: "ALL_NEW",
+    };
 
     const result = await dynamodb.update(paramsUpdate).promise();
 
     return {
       statusCode: 200,
       body: JSON.stringify({
-        updatedItem: result.Attributes
+        message: "id_master_unit actualizado correctamente",
+        updatedItem: result.Attributes,
       }),
-    }
+    };
   } catch (error) {
-    console.error("Error al actualizar lote:", error)
+    console.error("Error al actualizar id_master_unit:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: "Error interno al actualizar lote", error: error.message }),
-    }
+      body: JSON.stringify({
+        message: "Error interno al actualizar id_master_unit",
+        error: error.message,
+      }),
+    };
   }
-}
+};
 
 module.exports = {
-  modifiedCounterMaster
-}
+  modifiedCounterMaster,
+};
