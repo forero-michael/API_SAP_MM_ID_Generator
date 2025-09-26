@@ -48,7 +48,7 @@ const modifiedCounterMaster = async (event, context) => {
     return {
       statusCode: 200,
       body: JSON.stringify({
-        message: "id_master_unit actualizado correctamente",
+        message: "Lote actualizado",
         updatedItem: result.Attributes,
       }),
     };
