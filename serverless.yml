@@ -81,6 +81,15 @@ functions:
           method: 'PUT'
           authorizer:
             name: myJWTAuthorizer
+  get-by-date-range:
+    handler: getByDateRange/handler.getByDateRange
+    events:
+      - httpApi:
+          path: '/getByDateRange'
+          method: 'GET'
+          authorizer:
+            name: myJWTAuthorizer
+
 #configuracion de puestro del serverless offline y base de datos dynamo
 custom:
   serverless-offline:
