@@ -1,38 +1,60 @@
-const aws = require("aws-sdk")
-const { randomUUID } = require("crypto")
+const aws = require("aws-sdk");
 
 if (process.env.IS_OFFLINE) {
   dynamodb = new aws.DynamoDB.DocumentClient({
-    region: 'localhost',
-    endpoint: 'http://localhost:8010',
-    accessKeyId: 'DEFAUTLACESSKEY',
-    secretAccessKey: 'DEFAULTSECRET',
+    region: "localhost",
+    endpoint: "http://localhost:8010",
+    accessKeyId: "DEFAUTLACESSKEY",
+    secretAccessKey: "DEFAULTSECRET",
   });
 } else {
   dynamodb = new aws.DynamoDB.DocumentClient();
 }
 
-
-const modifiedCounterMaster = async (event, context) => {
+const modifiedCounterMaster = async (event) => {
   try {
     const body = JSON.parse(event.body);
-    const { uuid, id_master_unit } = body;
+    const { uuid, startLote } = body; 
 
-    if (!uuid || !id_master_unit) {
+
+    if (!uuid) {
       return {
         statusCode: 400,
         body: JSON.stringify({
-          message: "uuid e id_master_unit son requeridos",
+          message: "uuid es requerido",
         }),
       };
     }
 
-    let currentNumber = parseInt(id_master_unit.replace(/[^\d]/g, "")) || 0;
-    let prefix = id_master_unit[0] || "T"; // Para mantener el prefijo dinámico
-    let newNumber = currentNumber + 1;
-    let newLote = prefix + String(newNumber).padStart(id_master_unit.length - 1, "0");
+    const paramsGet = {
+      TableName: "ts_id_master_counter",
+      Key: { uuid },
+    };
 
-  
+    const currentItem = await dynamodb.get(paramsGet).promise();
+
+    let currentLote;
+
+    if (!currentItem.Item) {
+      if (!startLote) {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({
+            message: "El registro no existe, enviar startLote para inicializarlo",
+          }),
+        };
+      }
+      currentLote = startLote;
+    } else {
+      currentLote = currentItem.Item.id_master_unit;
+    }
+
+    let currentNumber = parseInt(currentLote.replace(/[^\d]/g, "")) || 0;
+    let prefix = currentLote[0] || "T";
+    let newNumber = currentNumber + 1;
+    let newLote = prefix + String(newNumber).padStart(currentLote.length - 1, "0");
+
+    // Guardar el nuevo valor
     const paramsUpdate = {
       TableName: "ts_id_master_counter",
       Key: { uuid },
