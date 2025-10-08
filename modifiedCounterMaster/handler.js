@@ -1,21 +1,22 @@
 const aws = require("aws-sdk");
 
+let dynamodb;
 if (process.env.IS_OFFLINE) {
   dynamodb = new aws.DynamoDB.DocumentClient({
     region: "localhost",
     endpoint: "http://localhost:8010",
-    accessKeyId: "DEFAUTLACESSKEY",
+    accessKeyId: "DEFAULTACCESSKEY",
     secretAccessKey: "DEFAULTSECRET",
   });
 } else {
-  dynamodb = new aws.DynamoDB.DocumentClient();
+    dynamodb = new aws.DynamoDB.DocumentClient();
 }
 
 const modifiedCounterMaster = async (event) => {
   try {
-    const body = JSON.parse(event.body);
-    const { uuid, startLote } = body; 
+    const body = typeof event.body === "string" ? JSON.parse(event.body) : event.body;
 
+    const { uuid, startLote } = body || {};
 
     if (!uuid) {
       return {
@@ -35,26 +36,29 @@ const modifiedCounterMaster = async (event) => {
 
     let currentLote;
 
+
     if (!currentItem.Item) {
       if (!startLote) {
         return {
           statusCode: 400,
           body: JSON.stringify({
-            message: "El registro no existe, enviar startLote para inicializarlo",
+            message: "El registro no existe. Envía 'startLote' para inicializarlo.",
           }),
         };
       }
+
       currentLote = startLote;
     } else {
       currentLote = currentItem.Item.id_master_unit;
     }
 
-    let currentNumber = parseInt(currentLote.replace(/[^\d]/g, "")) || 0;
-    let prefix = currentLote[0] || "T";
-    let newNumber = currentNumber + 1;
-    let newLote = prefix + String(newNumber).padStart(currentLote.length - 1, "0");
 
-    // Guardar el nuevo valor
+    const currentNumber = parseInt(currentLote.replace(/[^\d]/g, "")) || 0;
+    const prefix = currentLote[0] || "T";
+    const newNumber = currentNumber + 1;
+    const newLote = prefix + String(newNumber).padStart(currentLote.length - 1, "0");
+
+
     const paramsUpdate = {
       TableName: "ts_id_master_counter",
       Key: { uuid },
@@ -70,7 +74,7 @@ const modifiedCounterMaster = async (event) => {
     return {
       statusCode: 200,
       body: JSON.stringify({
-        message: "Lote actualizado",
+        message: "Lote actualizado correctamente",
         updatedItem: result.Attributes,
       }),
     };
