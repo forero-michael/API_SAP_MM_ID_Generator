@@ -9,7 +9,7 @@ if (process.env.IS_OFFLINE) {
     secretAccessKey: "DEFAULTSECRET",
   });
 } else {
-    dynamodb = new aws.DynamoDB.DocumentClient();
+  dynamodb = new aws.DynamoDB.DocumentClient();
 }
 
 const modifiedCounterMaster = async (event) => {
@@ -21,12 +21,11 @@ const modifiedCounterMaster = async (event) => {
     if (!uuid) {
       return {
         statusCode: 400,
-        body: JSON.stringify({
-          message: "uuid es requerido",
-        }),
+        body: JSON.stringify({ message: "uuid es requerido" }),
       };
     }
 
+    // Buscar el registro actual
     const paramsGet = {
       TableName: "ts_id_master_counter",
       Key: { uuid },
@@ -34,38 +33,34 @@ const modifiedCounterMaster = async (event) => {
 
     const currentItem = await dynamodb.get(paramsGet).promise();
 
-    let currentLote;
+    // Determinar el lote actual
+    let currentLote = currentItem?.Item?.id_master_unit || startLote;
 
-
-    if (!currentItem.Item) {
-      if (!startLote) {
-        return {
-          statusCode: 400,
-          body: JSON.stringify({
-            message: "El registro no existe. Envía 'startLote' para inicializarlo.",
-          }),
-        };
-      }
-
-      currentLote = startLote;
-    } else {
-      currentLote = currentItem.Item.id_master_unit;
+    // Validar que al menos exista un valor inicial
+    if (!currentLote) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          message: "El registro no existe y no se proporcionó 'startLote' para inicializarlo.",
+        }),
+      };
     }
 
+    // Asegurar que currentLote es un string
+    currentLote = String(currentLote);
 
+    // Extraer número y prefijo
     const currentNumber = parseInt(currentLote.replace(/[^\d]/g, "")) || 0;
     const prefix = currentLote[0] || "T";
     const newNumber = currentNumber + 1;
     const newLote = prefix + String(newNumber).padStart(currentLote.length - 1, "0");
 
-
+    // Guardar nuevo valor
     const paramsUpdate = {
       TableName: "ts_id_master_counter",
       Key: { uuid },
       UpdateExpression: "SET id_master_unit = :newLote",
-      ExpressionAttributeValues: {
-        ":newLote": newLote,
-      },
+      ExpressionAttributeValues: { ":newLote": newLote },
       ReturnValues: "ALL_NEW",
     };
 
@@ -90,6 +85,4 @@ const modifiedCounterMaster = async (event) => {
   }
 };
 
-module.exports = {
-  modifiedCounterMaster,
-};
+module.exports = { modifiedCounterMaster };
