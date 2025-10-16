@@ -27,7 +27,7 @@ const getByDateRange = async (event) => {
 
     const params = {
       TableName: "ts_id_generated",
-      IndexName: "dateCreatedIndex", // asegúrate que este GSI existe
+      IndexName: "dateCreatedIndex", 
       KeyConditionExpression:
         "country = :country AND date_created BETWEEN :start AND :end",
       ExpressionAttributeValues: {
@@ -41,7 +41,7 @@ const getByDateRange = async (event) => {
 
     return {
       statusCode: 200,
-      body: JSON.stringify({
+      body: JSON.stringify({  
         count: result.Count,
         items: result.Items,
       }),
