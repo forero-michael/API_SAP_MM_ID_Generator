@@ -25,7 +25,7 @@ const modifiedCounterMaster = async (event) => {
       };
     }
 
-    // Buscar el registro actual
+
     const paramsGet = {
       TableName: "ts_id_master_counter",
       Key: { uuid },
@@ -33,10 +33,10 @@ const modifiedCounterMaster = async (event) => {
 
     const currentItem = await dynamodb.get(paramsGet).promise();
 
-    // Determinar el lote actual
+
     let currentLote = currentItem?.Item?.id_master_unit || startLote;
 
-    // Validar que al menos exista un valor inicial
+
     if (!currentLote) {
       return {
         statusCode: 400,
@@ -46,16 +46,16 @@ const modifiedCounterMaster = async (event) => {
       };
     }
 
-    // Asegurar que currentLote es un string
+
     currentLote = String(currentLote);
 
-    // Extraer número y prefijo
+
     const currentNumber = parseInt(currentLote.replace(/[^\d]/g, "")) || 0;
     const prefix = currentLote[0] || "T";
     const newNumber = currentNumber + 1;
     const newLote = prefix + String(newNumber).padStart(currentLote.length - 1, "0");
 
-    // Guardar nuevo valor
+
     const paramsUpdate = {
       TableName: "ts_id_master_counter",
       Key: { uuid },
@@ -69,7 +69,7 @@ const modifiedCounterMaster = async (event) => {
     return {
       statusCode: 200,
       body: JSON.stringify({
-        message: "Lote actualizado correctamente",
+        message: "Lote actualizado",
         updatedItem: result.Attributes,
       }),
     };
