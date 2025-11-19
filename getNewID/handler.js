@@ -93,6 +93,7 @@ const getNewID = async (event, context) => {
         const masterId = objectMasterId.Id_master_unit
         const numberMasterID = parseInt(masterId.slice(1)) 
         const uuidGenerated = randomUUID()
+        // arranca ciclo for nro_matriculas
         const sendMasterIdLoteSAP = numberMasterID + 1
         const fechaLocal = getCountryLocalTime(country);
         const sendMasterIdLoteSAPFormatted = String(sendMasterIdLoteSAP).padStart(masterId.slice(1).length, '0')
@@ -110,7 +111,9 @@ const getNewID = async (event, context) => {
             },
         }
         await dynamodb.put(paramsInsertQueryIdGenerated).promise()
+        // temrina ciclo for
 
+        // llama el uuid del id primario actual de la tabla ts_id_master antes de generar los id (matriculas) se hacxe despues del for
         const priority = "primary"
         var paramsQueryIdMasterPrimary = {
             TableName: "ts_id_master_counter",
@@ -120,10 +123,12 @@ const getNewID = async (event, context) => {
                 ':p': priority,
             },
         }
+
         const queryResultIDMasterPrimary = await dynamodb.query(paramsQueryIdMasterPrimary).promise();
         const itemToUpdate = queryResultIDMasterPrimary.Items[0];
         const uuidToUpdate = itemToUpdate.uuid;
         console.log(uuidToUpdate)
+        // actualiza el id con base a la uuid con el ultimo valor generado el la peticion de matriculas (id)
         const updateParams = {
             TableName: "ts_id_master_counter",
             Key: { uuid: uuidToUpdate },
@@ -132,7 +137,7 @@ const getNewID = async (event, context) => {
             ReturnValues: 'ALL_NEW',
             };
         await dynamodb.update(updateParams).promise();
-
+        // devuelve ahora un array con varias matriculas
         const response = {
             statusCode: 201, 
             body: JSON.stringify(paramsInsertQueryIdGenerated.Item),
