@@ -16,24 +16,27 @@ const getNewID = async (event, context) => {
 
   try {
 
-    const statusCounter = "primary"
+    const statusCounter = "primary";
 
     var paramsQueryActualMasterID = {
       TableName: "ts_id_master_counter",
-      FilterExpression: 'priority = :p',
+      FilterExpression: '#priority = :p',
+      ExpressionAttributeNames: {
+        '#priority': 'priority'
+      },
       ExpressionAttributeValues: {
         ':p': statusCounter,
       },
-    }
+    };
 
-    const jsonActualMasterId = await dynamodb.scan(paramsQueryActualMasterID).promise()
+    const jsonActualMasterId = await dynamodb.scan(paramsQueryActualMasterID).promise();
     const objectMasterId = jsonActualMasterId.Items[0]
     const masterId = objectMasterId.Id_master_unit
 
     const numberMasterID = parseInt(masterId.slice(1))
 
     // Construcción del JSON para envío a Testa
-    
+
     const { country, machine, quantity: quantityParam } = event.queryStringParameters || {};
 
     // Lectura del parámetro quantity
