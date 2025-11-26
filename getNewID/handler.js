@@ -154,5 +154,5 @@ const getNewID = async (event, context) => {
 }
 
 module.exports = {
-    getNewID
+  getNewID
 }
