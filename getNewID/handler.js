@@ -20,16 +20,13 @@ const getNewID = async (event, context) => {
 
     var paramsQueryActualMasterID = {
       TableName: "ts_id_master_counter",
-      FilterExpression: '#priority = :p',
-      ExpressionAttributeNames: {
-        '#priority': 'priority'
-      },
-      ExpressionAttributeValues: {
-        ':p': statusCounter,
-      },
+      IndexName: 'PriorityIndex',
+      KeyConditionExpression: '#p = :p',
+      ExpressionAttributeNames: { '#p': 'priority' },
+      ExpressionAttributeValues: { ':p': statusCounter },
     };
 
-    const jsonActualMasterId = await dynamodb.scan(paramsQueryActualMasterID).promise();
+    const jsonActualMasterId = await dynamodb.query(paramsQueryActualMasterID).promise();
     const objectMasterId = jsonActualMasterId.Items[0]
     const masterId = objectMasterId.Id_master_unit
 
