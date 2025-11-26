@@ -1,23 +1,161 @@
-# "org" ensures this Service is used with the correct Serverless Framework Access Key.
-org: drpaulaximena
-# "service" is the name of this project. This will also be added to your AWS resource names.
 service: api-sap-mm-id-generator
 
+# Herramientas para trabajo con serverless, en local y en nube
 plugins:
   - serverless-offline
- 
+  # - serverless-offline-local-authorizers-plugin
+  - serverless-dynamodb
 
 provider:
   name: aws
-  runtime: nodejs22.x
-  # Uncomment to easily set up a custom domain. Read the docs for more details:
-  # https://www.serverless.com/framework/docs/providers/aws/guide/domains
-  # domain: api.example.com
+  runtime: nodejs18.x
+  region: us-east-1
+  
+  # stage: ${opt:stage, 'dev'}
+  role: arn:aws:iam::896994900671:role/RolServerless
+  deploymentBucket:
+    name: spradling-sls-artifacts-us-east-1
+    blockPublicAccess: true
+    serverSideEncryption: AES256
+  httpApi:
+    authorizers:
+      myJWTAuthorizer:
+        type: jwt
+        identitySource: $request.header.Authorization
+        # Reemplaza los valores de ejemplo con los de tu User Pool
+        issuerUrl: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_H0jA2ny1g
+        audience:
+          - '2jvhi7csnr41idp51k0i0do8cj'
+
+        # local:
+        #   claims:
+        #     - sub=testaSolutions
+        #     - aud=api-sap-mm-id-testa-pqn-2349
 
 functions:
-  hello:
-    handler: handler.hello
+  login:
+    handler: auth/handler.login
     events:
       - httpApi:
-          path: /
-          method: get
+          path: '/login'
+          method: 'POST'
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+        - "cognito-idp:InitiateAuth"
+        Resource:
+          - "arn:aws:cognito-idp:us-east-1:896994900671:userpool/us-east-1_H0jA2ny1g"
+  set-new-password:
+    handler: changePassword/handler.changePassword
+    events:
+      - httpApi:
+          path: '/set-new-password'
+          method: 'POST'
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - "cognito-idp:RespondToAuthChallenge"
+        Resource:
+          - "arn:aws:cognito-idp:us-east-1:896994900671:userpool/us-east-1_H0jA2ny1g"
+
+  get-new-Id:
+    handler: getNewID/handler.getNewID
+    events:
+      - httpApi: 
+          path: '/getNewID'
+          method: 'GET'
+          authorizer:
+            name: myJWTAuthorizer
+  create-new_id:
+    handler: createNewId/handler.createNewId
+    events:
+      - httpApi:
+          path: '/createNewID'
+          method: 'POST'
+          authorizer:
+            name: myJWTAuthorizer  
+  modified-counter-master:
+    handler: modifiedCounterMaster/handler.modifiedCounterMaster
+    events:
+      - httpApi:
+          path: '/modifiedCounterMaster'
+          method: 'PUT'
+          authorizer:
+            name: myJWTAuthorizer
+  get-by-date-range:
+    handler: getByDateRange/handler.getByDateRange
+    events:
+      - httpApi:
+          path: '/getByDateRange'
+          method: 'GET'
+          authorizer:
+            name: myJWTAuthorizer
+#configuracion de puestro del serverless offline y base de datos dynamo
+custom:
+  serverless-offline:
+    httpPort: 3000
+    lambdaPort: 3002
+
+  dynamodb:
+    stages:
+      - dev
+    start:
+      port: 8010
+      inMemory: false         # va a requerir un archivo de almacenamiento
+      dbPath: .offline-data   # Path donde se guarda el archivo de almacenamiento
+      migrate: true
+
+resources:
+  Resources:
+    devTsIdMasterCounter:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        TableName: ts_id_master_counter
+        AttributeDefinitions:
+          - AttributeName: uuid
+            AttributeType: S
+          - AttributeName: priority
+            AttributeType: S
+        KeySchema:
+          - AttributeName: uuid
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: PriorityIndex 
+            KeySchema:
+              - AttributeName: priority
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+    devTsIdGenerated:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        TableName: ts_id_generated
+        AttributeDefinitions:
+          - AttributeName: uuid
+            AttributeType: S
+          - AttributeName: id_generated
+            AttributeType: S
+          - AttributeName: country
+            AttributeType: S
+          - AttributeName: date_created
+            AttributeType: S
+        KeySchema:
+          - AttributeName: uuid
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: idGeneratedIndex
+            KeySchema:
+              - AttributeName: id_generated
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: dateCreatedIndex
+            KeySchema:
+              - AttributeName: country
+                KeyType: HASH
+              - AttributeName: date_created
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL

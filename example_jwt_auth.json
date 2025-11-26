@@ -1,0 +1,14 @@
+[{
+  "alg": "HS256",
+  "typ": "JWT"
+},
+{
+  "sub": "testaSolutions",
+  "iss": "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_abcdef123",
+  "aud": "api-sap-mm-id-testa-pqn-2349",
+  "scope": "user:read"
+},
+{
+    "comando_para_serverless-offline": "sls offline start --ignoreJWTSignature --stage dev"
+}
+]
