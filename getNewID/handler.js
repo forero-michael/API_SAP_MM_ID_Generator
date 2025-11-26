@@ -87,7 +87,7 @@ const getNewID = async (event, context) => {
                 })
             }
         }
-       
+        
         // Contruccion del JSON para envio a Testa
         const objectMasterId = jsonActualMasterId.Items[0]
         const masterId = objectMasterId.Id_master_unit
