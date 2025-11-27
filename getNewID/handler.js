@@ -29,7 +29,7 @@ const getNewID = async (event, context) => {
     const jsonActualMasterId = await dynamodb.query(paramsQueryActualMasterID).promise();
     const objectMasterId = jsonActualMasterId.Items[0]
     const masterId = objectMasterId.Id_master_unit
-
+    const indicator = masterId[0]
     const numberMasterID = parseInt(masterId.slice(1))
 
     // Construcción del JSON para envío a Testa
@@ -69,7 +69,7 @@ const getNewID = async (event, context) => {
 
       const newIdNumber = numberMasterID + i
       const formatted = String(newIdNumber).padStart(idLength, '0')
-      const fullID = `T${formatted}`
+      const fullID = `${indicator}${formatted}`
 
       const newItem = {
         uuid: randomUUID(),
@@ -90,7 +90,7 @@ const getNewID = async (event, context) => {
     //Actualiza el master ID con el último número generado
     const newMasterIDFinalNumber = numberMasterID + quantity
     const newMasterIDFormatted = String(newMasterIDFinalNumber).padStart(idLength, '0')
-    const newMasterIDWithT = `T${newMasterIDFormatted}`
+    const newMasterIDWithT = `${indicator}${newMasterIDFormatted}`
 
     const priority = "primary"
 
